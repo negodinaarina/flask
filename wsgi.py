@@ -1,6 +1,6 @@
 import os
-from main import application
+from main import app
 
 if __name__ == "__main__":
     port: int = int(os.environ.get('PORT'))
-    application.run(port=port, host='0.0.0.0')
+    app.run(port=port, host='0.0.0.0')
