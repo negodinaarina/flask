@@ -9,25 +9,23 @@ from models import db, Item, Order, User, OrderItem
 from random import randint
 from flask_mail import Mail, Message
 
-
-
-application = Flask(__name__)
-application.permanent_session_lifetime = datetime.timedelta(days=365)
-ckeditor = CKEditor(application)
-application.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///shop.db"
-application.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app = Flask(__name__)
+app.permanent_session_lifetime = datetime.timedelta(days=365)
+ckeditor = CKEditor(app)
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///shop.db"
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 SECRET_KEY = os.urandom(32)
-application.config['SECRET_KEY'] = SECRET_KEY
-application.config['MAIL_SERVER'] = 'smtp.googlemail.com'
-application.config['MAIL_PORT'] = 587
-application.config['MAIL_USE_TLS'] = True
-application.config['MAIL_USERNAME'] = 'dedinsideoutside@gmail.com'  # введите свой адрес электронной почты здесь
-application.config['MAIL_DEFAULT_SENDER'] = 'dedinsideoutside@gmail.com'  # и здесь
-application.config['MAIL_PASSWORD'] = 'ijvppwclgzseisqd'
-db.init_app(application)
+app.config['SECRET_KEY'] = SECRET_KEY
+app.config['MAIL_SERVER'] = 'smtp.googlemail.com'
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USERNAME'] = 'dedinsideoutside@gmail.com'  # введите свой адрес электронной почты здесь
+app.config['MAIL_DEFAULT_SENDER'] = 'dedinsideoutside@gmail.com'  # и здесь
+app.config['MAIL_PASSWORD'] = 'ijvppwclgzseisqd'
+db.init_app(app)
 login_manager = LoginManager()
-login_manager.init_app(application)
-mail = Mail(application)
+login_manager.init_app(app)
+mail = Mail(app)
 
 
 @login_manager.user_loader
@@ -43,7 +41,7 @@ def count_cart():
     for it in cart:
         item = Item.query.filter_by(id=it['id']).first()
         quantity += int(it['quantity'])
-        price = int(it['quantity'])*item.price
+        price = int(it['quantity']) * item.price
         total += price
         products.append({'title': item.title, 'id': item.id, 'price': item.price,
                          'quantity': it['quantity'], 'total': price, 'index': index})
@@ -59,7 +57,7 @@ def send_mail(recepient, subject, order_id, status):
     mail.send(msg)
 
 
-@application.route('/')
+@app.route('/')
 def index():
     if 'cart' not in session:
         session['cart'] = []
@@ -67,21 +65,21 @@ def index():
     return render_template('index.html', items=items, current_user=current_user)
 
 
-@application.route('/about')
+@app.route('/about')
 def about():
     if 'cart' not in session:
         session['cart'] = []
     return render_template('about.html', current_user=current_user)
 
 
-@application.route('/delivery')
+@app.route('/delivery')
 def delivery():
     if 'cart' not in session:
         session['cart'] = []
     return render_template('about.html', current_user=current_user)
 
 
-@application.route('/item/<int:id>', methods=['GET', 'POST'])
+@app.route('/item/<int:id>', methods=['GET', 'POST'])
 def product(id):
     if 'cart' not in session:
         session['cart'] = []
@@ -92,7 +90,7 @@ def product(id):
     return render_template('product.html', current_user=current_user, item=item, desc_list=desc_list, l=l, form=form)
 
 
-@application.route('/addtocart/<int:id>')
+@app.route('/addtocart/<int:id>')
 def add_to_cart(id):
     if 'cart' not in session:
         session['cart'] = []
@@ -109,7 +107,7 @@ def add_to_cart(id):
     return redirect(url_for('product', id=id))
 
 
-@application.route('/cart', methods=['GET'])
+@app.route('/cart', methods=['GET'])
 def cart():
     if 'cart' not in session:
         session['cart'] = []
@@ -120,24 +118,24 @@ def cart():
         products, total, quantity = [], 0, 0
         is_empty = True
 
-    return render_template('cart.html', current_user=current_user, products=products, total=total, quantity=quantity, is_empty=is_empty)
+    return render_template('cart.html', current_user=current_user, products=products, total=total, quantity=quantity,
+                           is_empty=is_empty)
 
 
-@application.route('/remove_item/<int:index>')
+@app.route('/remove_item/<int:index>')
 def remove_item(index):
     del session['cart'][index]
     session.modified = True
     return redirect(url_for('cart'))
 
 
-
-@application.route('/manageitems')
+@app.route('/manageitems')
 def manage_items():
     items = db.session.query(Item).all()
     return render_template('admin.html', items=items)
 
 
-@application.route('/additem', methods=["POST", "GET"])
+@app.route('/additem', methods=["POST", "GET"])
 @login_required
 def add_item():
     form = ItemForm()
@@ -157,7 +155,7 @@ def add_item():
     return render_template('add_item.html', form=form, current_user=current_user)
 
 
-@application.route('/delete/<int:id>')
+@app.route('/delete/<int:id>')
 @login_required
 def delete(id):
     item = Item.query.get(id)
@@ -166,7 +164,7 @@ def delete(id):
     return redirect(url_for('manage_items'))
 
 
-@application.route('/checkout', methods=["GET", "POST"])
+@app.route('/checkout', methods=["GET", "POST"])
 def check_out():
     form = CheckOutForm()
     products, total, quantity = count_cart()
@@ -186,7 +184,7 @@ def check_out():
                 item_id=product['id']
             )
             order.items.append(order_item)
-            item=Item.query.filter_by(id=product['id']).update({'in_stock':Item.in_stock - int(product['quantity'])})
+            item = Item.query.filter_by(id=product['id']).update({'in_stock': Item.in_stock - int(product['quantity'])})
             db.session.add(order)
             db.session.commit()
 
@@ -198,7 +196,7 @@ def check_out():
     return render_template('checkout.html', form=form, total=total, quantity=quantity, products=products)
 
 
-@application.route('/edit/<int:id>', methods=["POST", "GET"])
+@app.route('/edit/<int:id>', methods=["POST", "GET"])
 @login_required
 def edit(id):
     item = Item.query.get(id)
@@ -223,7 +221,7 @@ def edit(id):
     return render_template('add_item.html', form=form, current_user=current_user)
 
 
-@application.route('/login', methods=["POST", "GET"])
+@app.route('/login', methods=["POST", "GET"])
 def log_in():
     form = LogInForm()
     if request.method == "POST":
@@ -232,26 +230,27 @@ def log_in():
             login_user(user)
             return redirect(url_for('index'))
         else:
-            return render_template('signin.html', current_user=current_user, error="Неправильно введены данные", form=form)
+            return render_template('signin.html', current_user=current_user, error="Неправильно введены данные",
+                                   form=form)
     return render_template('signin.html', form=form, current_user=current_user)
 
 
-@application.route('/logout')
+@app.route('/logout')
 def log_out():
     logout_user()
     return redirect(url_for('index'))
 
 
-@application.route('/orders', methods=['GET', 'POST'])
+@app.route('/orders', methods=['GET', 'POST'])
 def orders():
     orders = db.session.query(Order).all()
     return render_template('orders.html', orders=orders)
 
 
-@application.route('/order/<int:id>', methods=["POST", "GET"])
+@app.route('/order/<int:id>', methods=["POST", "GET"])
 def order(id):
     order = Order.query.get(id)
-    form=StatusForm(status=order.status)
+    form = StatusForm(status=order.status)
     if request.method == 'POST':
         order.status = form.status.data
         db.session.commit()
@@ -264,6 +263,3 @@ def order(id):
         arr = [item, order_item.quantity]
         items.append(arr)
     return render_template('order.html', order=order, form=form, items=items)
-
-
-
