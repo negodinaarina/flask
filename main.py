@@ -19,8 +19,8 @@ app.config['SECRET_KEY'] = SECRET_KEY
 app.config['MAIL_SERVER'] = 'smtp.googlemail.com'
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USERNAME'] = 'dedinsideoutside@gmail.com'  # введите свой адрес электронной почты здесь
-app.config['MAIL_DEFAULT_SENDER'] = 'dedinsideoutside@gmail.com'  # и здесь
+app.config['MAIL_USERNAME'] = 'dedinsideoutside@gmail.com'  
+app.config['MAIL_DEFAULT_SENDER'] = 'dedinsideoutside@gmail.com' 
 app.config['MAIL_PASSWORD'] = 'ijvppwclgzseisqd'
 db.init_app(app)
 login_manager = LoginManager()
@@ -145,8 +145,8 @@ def add_item():
             description=form.description.data,
             photo_url=form.photo_url.data,
             price=form.price.data,
-            weight=form.weight.data,
-            size=form.size.data,
+            weight=0,
+            size=0,
             in_stock=form.in_stock.data
         )
         db.session.add(item)
@@ -205,8 +205,6 @@ def edit(id):
         description=item.description,
         photo_url=item.photo_url,
         price=item.price,
-        weight=item.weight,
-        size=item.size,
         in_stock=item.in_stock
     )
     if request.method == 'POST':
@@ -214,8 +212,6 @@ def edit(id):
         item.description = form.description.data
         item.photo_url = form.photo_url.data
         item.price = form.price.data
-        item.weight = form.weight.data
-        item.size = form.size.data
         db.session.commit()
         return redirect(url_for('manage_items'))
     return render_template('add_item.html', form=form, current_user=current_user)
