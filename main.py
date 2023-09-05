@@ -51,7 +51,8 @@ def count_cart():
 
 
 def send_mail(recepient, subject, order_id, status):
-    html = ' <h1>Номер заказа - {{order_id}} <h1><br><h2>Статус заказа - {{status}}</h2>'
+    
+    html = "Статус вашего заказа {} иземенен на<{}>.".format(order_id, status)
     msg = Message(subject=subject, recipients=[recepient])
     msg.html = html
     mail.send(msg)
